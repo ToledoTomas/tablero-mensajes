@@ -1,29 +1,64 @@
-import pool from "../db.js";
+import db from "../db.js";
 import { z } from "zod";
+import bcrypt from "bcrypt";
 
 export const createUserSchema = z.object({
   body: z.object({
-    username: z.string().min(3, "El username debe contener al menos 4 carácteres").max(255),
-    password: z.string()
+    username: z
+      .string({
+        message: "El username es requerido",
+      })
+      .min(3, "El username debe contener al menos 4 carácteres")
+      .max(255),
+    password: z
+      .string({
+        message: "El password es requerido",
+      })
       .min(6, "El password debe contener al menos 6 caracteres")
       .max(255),
   }),
 });
 
+export const loginUserSchema = z.object({
+  body: z.object({
+    username: z.string(),
+    password: z.string(),
+  }),
+});
+
 export const getAllUsers = async () => {
-  const result = await pool.query("SELECT * FROM users");
-  return result.rows;
+  const result = await db.any("SELECT * FROM users");
+  return result;
 };
 
 export const getUser = async id => {
-  const result = await pool.query("SELECT * FROM users WHERE id = $1", [id]);
-  return result.rows[0];
+  const result = await db.one("SELECT * FROM users WHERE id = $1", [id]);
+  return result;
 };
 
-export const createNewUser = async (username, password) => {
-  const result = await pool.query(
+export const createNewUser = async ({ username, password }) => {
+  const result = await db.one(
     "INSERT INTO users (username, password) VALUES ($1, $2) RETURNING *",
-    [username, password]
+    [username, password],
   );
-  return result.rows[0];
-}
+  return result;
+};
+
+export const loginUser = async ({ username, password }) => {
+  console.log("USERNAME", username);
+  console.log("PASSWORD", password);
+  const result = await db.oneOrNone("SELECT * FROM users WHERE username = $1", [
+    username,
+  ]);
+  console.log("RESULTADO", result);
+  if (!result) {
+    throw new Error("Usuario no encontrado");
+  }
+
+  const isValidPassword = await bcrypt.compare(password, result.password);
+  if (!isValidPassword) {
+    throw new Error("Contraseña incorrecta");
+  }
+
+  return result;
+};
