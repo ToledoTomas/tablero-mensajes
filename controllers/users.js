@@ -3,6 +3,7 @@ import {
   getUser,
   createNewUser,
   loginUser,
+  removeUser
 } from "../models/user.js";
 import bcrypt from "bcrypt";
 
@@ -45,5 +46,17 @@ export const login = async (req, res) => {
     res.status(200).json(user);
   } catch (error) {
     res.status(500).json({ error: "Error al iniciar sesión" });
+  }
+};
+
+export const deleteUser = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const user = await removeUser(id);
+    res.status(200).json(user);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ error: `Error al eliminar el usuario con id ${id}` });
   }
 };

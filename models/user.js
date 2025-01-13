@@ -45,12 +45,9 @@ export const createNewUser = async ({ username, password }) => {
 };
 
 export const loginUser = async ({ username, password }) => {
-  console.log("USERNAME", username);
-  console.log("PASSWORD", password);
   const result = await db.oneOrNone("SELECT * FROM users WHERE username = $1", [
     username,
   ]);
-  console.log("RESULTADO", result);
   if (!result) {
     throw new Error("Usuario no encontrado");
   }
@@ -60,5 +57,14 @@ export const loginUser = async ({ username, password }) => {
     throw new Error("Contraseña incorrecta");
   }
 
+  const { password: _, ...userWithoutPassword } = result;
+
+  return userWithoutPassword;
+};
+
+export const removeUser = async id => {
+  const result = await db.one("DELETE FROM users WHERE id = $1 RETURNING *", [
+    id,
+  ]);
   return result;
 };
