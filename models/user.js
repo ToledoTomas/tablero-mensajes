@@ -52,6 +52,7 @@ export const loginUser = async ({ username, password }) => {
     throw new Error("Usuario no encontrado");
   }
 
+
   const isValidPassword = await bcrypt.compare(password, result.password);
   if (!isValidPassword) {
     throw new Error("Contraseña incorrecta");

@@ -3,9 +3,13 @@ import {
   getUser,
   createNewUser,
   loginUser,
-  removeUser
+  removeUser,
 } from "../models/user.js";
 import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
+import { config } from "dotenv";
+
+config();
 
 export const getUsers = async (req, res) => {
   try {
@@ -39,11 +43,24 @@ export const createUser = async (req, res) => {
 
 export const login = async (req, res) => {
   const { username, password } = req.body;
-  console.log("USERNAME CONTROLLER", username);
-  console.log("PASSWORD CONTROLLER", password);
   try {
     const user = await loginUser({ username, password });
-    res.status(200).json(user);
+    const token = jwt.sign(
+      { id: user.id, username: user.username },
+      process.env.SECRET_KEY,
+      {
+        expiresIn: "1h",
+      },
+    );
+    res
+      // .cookie("access_token", token, {
+      //   httpOnly: true,
+      //   secure: process.env.NODE_ENV === "production",
+      //   sameSite: "strict",
+      //   maxAge: 1000 * 60 * 60,
+      // })
+      .status(200)
+      .json({ user, token });
   } catch (error) {
     res.status(500).json({ error: "Error al iniciar sesión" });
   }
